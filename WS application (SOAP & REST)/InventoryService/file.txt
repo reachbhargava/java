@@ -1,0 +1,8 @@
+Bike 40000 196
+
+Harddisk 200 0
+
+Laptop 1000 0
+
+Mouse 10 0
+

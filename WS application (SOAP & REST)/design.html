@@ -1,0 +1,644 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+
+
+
+
+  
+  
+  
+  
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+
+
+
+
+  
+  
+  
+  
+  <title>Java Swing Client for Accessing Web Services: Design Details</title>
+</head>
+
+
+<body>
+
+
+
+
+<h1>Java Swing Client for Accessing Web Services: Design Details</h1>
+
+
+
+
+<p>The sample application for this solutions catalog entry is a swing
+client that provides a GUI to send a purchase order document to the
+String Purchase Order Web service. Here is a screenshot of the
+application:
+</p>
+
+
+
+
+<p><img src="screenshot.jpg" alt="Screenshot of the Swing application"></p>
+
+
+
+
+<p>This application is
+written with the <a href="http://www.netbeans.org/community/releases/41/index.html">Netbeans[TM]
+IDE 4.1</a>. The primary class in the application is <code><a href="https://bpcatalog.dev.java.net/source/browse/*checkout*/bpcatalog/ws/webservices/docoriented/apps/swing-client/src/java/com/sun/j2ee/blueprints/swingclient/MainWindow.java">MainWindow</a></code>,
+which is implemented as a Swing frame. It uses a delegate class <a href="https://bpcatalog.dev.java.net/source/browse/*checkout*/bpcatalog/ws/webservices/docoriented/apps/swing-client/src/java/com/sun/j2ee/blueprints/swingclient/POServiceBD.java">POServiceBD</a>
+to invoke web services.</p>
+
+
+
+
+<p>This application can be run stand-alone as well as with Java Web
+Start.&nbsp;The Java Web Start enabled version of this application is
+included in a Web application contained in <code>webstart-client.war</code>.&nbsp;</p>
+
+
+<h2>Invoking the Web Service</h2>
+
+
+The application client provides options to invoke the String Purchase
+Order Web Service using stubs, dynamic proxy, or DII. The Web service
+is invoked through a delegate class <code>POServiceBD</code>. <br>
+
+
+<br>
+
+<a href="#code-example-1">Code Example 1</a> illustrates how stubs are used: <br>
+
+
+<code><br>
+
+<a name="code-example-1"></a>
+// import stub classes<br>
+
+
+import </code><code>com.sun.j2ee.blueprints.stringposervice.StringPurchaseOrderService_Impl;<br>
+
+
+</code><code>import com.sun.j2ee.blueprints.stringposervice.StringPurchaseOrderServiceSEI;<br>
+
+
+<br>
+
+
+</code><code>// ... other contents of the class file<br>
+
+
+<br>
+
+
+&nbsp; // Using stubs<br>
+
+
+</code><code>&nbsp;&nbsp;StringPurchaseOrderService_Impl svcimpl = new&nbsp;StringPurchaseOrderService_Impl();<br>
+
+
+&nbsp;&nbsp;StringPurchaseOrderServiceSEI poservice = svcimpl.getStringPurchaseOrderServiceSEIPort();<br>
+
+
+&nbsp;&nbsp;((Stub)poservice)._setProperty(Stub.ENDPOINT_ADDRESS_PROPERTY, serviceUrl);<br>
+
+
+&nbsp; String result = poservice.submitPO(xmlDocStr);<br>
+
+<br>
+
+<span style="font-weight: bold;">Code Example 1: Using Stubs to Invoke a Web Service</span><br>
+
+</code>
+<br>
+
+<a href="#code-example-2">Code Example 2</a>&nbsp;illustrates how dyamic proxies are used: <br>
+
+
+<br>
+
+
+<code><a name="code-example-2"></a>// import classes for service endpoint interface<br>
+
+
+</code><code>import com.sun.j2ee.blueprints.stringposervice_wrapped.StringPurchaseOrderServiceSEI;<br>
+
+
+</code><code>import&nbsp;com.sun.j2ee.blueprints.stringposervice_wrapped.SubmitPO;</code><br>
+
+
+<code>import com.sun.j2ee.blueprints.stringposervice_wrapped.SubmitPOResponse;<br>
+
+
+<br>
+
+
+</code><code>// ... other contents of the class file<br>
+
+
+<br>
+
+
+&nbsp; // Using dynamic proxy<br>
+
+
+</code><code>&nbsp; ServiceFactory sf = ServiceFactory.newInstance();<br>
+
+
+&nbsp; URL wsdlURL = new URL(serviceUrl + "?WSDL");<br>
+
+
+&nbsp;&nbsp;QName serviceQname = new QName(NS_BODY, "StringPurchaseOrderService");<br>
+
+
+&nbsp;&nbsp;Service s = sf.createService(wsdlURL, serviceQname);<br>
+
+
+&nbsp;&nbsp;QName portQname = new QName(NS_BODY, "StringPurchaseOrderServiceSEIPort");<br>
+
+
+&nbsp;&nbsp;StringPurchaseOrderServiceSEI port =
+(StringPurchaseOrderServiceSEI)&nbsp;s.getPort(portQname,&nbsp;StringPurchaseOrderServiceSEI.class);<br>
+
+
+&nbsp;&nbsp;SubmitPO param = new&nbsp;SubmitPO(xmlDocStr);<br>
+
+
+&nbsp;&nbsp;SubmitPOResponse response = port.submitPO(param);<br>
+
+
+&nbsp; String result = response.getResult();<br>
+
+<br>
+
+<span style="font-weight: bold;">Code Example 2: Using Dynamic Proxy to Invoke a Web Service</span><br>
+
+
+</code><br>
+
+
+The class <code>SubmitPO</code> is generated from the service WSDL,
+however it needed to be rewritten to workaround a bug in the JAX-RPC
+compiler where it names one of the private fields (<code>String_1</code>) differently (<code><span style="font-weight: bold; text-decoration: underline;">s</span>tring_1</code> instead of <code><span style="font-weight: bold; text-decoration: underline;">S</span>tring_1</code>). This bug results in the <code>SubmiPO</code> class becoming unusable for use with dynamic proxies or DII. <br>
+
+
+<br>
+
+<a href="#code-example-3">Code Example 3</a> illustrates how DII is used: <br>
+
+
+<br>
+
+
+<code><a name="code-example-3"></a>// import classes for service endpoint interface<br>
+
+
+</code><code>import com.sun.j2ee.blueprints.stringposervice_wrapped.StringPurchaseOrderServiceSEI;<br>
+
+
+</code><code>import&nbsp;com.sun.j2ee.blueprints.stringposervice_wrapped.SubmitPO;</code><br>
+
+
+<code>import com.sun.j2ee.blueprints.stringposervice_wrapped.SubmitPOResponse;<br>
+
+
+<br>
+
+
+</code><code>// ... other contents of the class file<br>
+
+
+<br>
+
+
+&nbsp; // Using DII<br>
+
+
+</code><code></code><code>&nbsp; ServiceFactory sf = ServiceFactory.newInstance();<br>
+
+
+&nbsp;&nbsp;URL wsdlURL = new URL(serviceUrl + "?WSDL");<br>
+
+
+&nbsp;&nbsp;QName serviceQname = new QName(NS_BODY, "StringPurchaseOrderService");<br>
+
+
+&nbsp;&nbsp;Service s = sf.createService(wsdlURL, serviceQname);<br>
+
+
+&nbsp;&nbsp;QName portQname = new QName(NS_BODY, "StringPurchaseOrderServiceSEIPort");<br>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+
+
+&nbsp;&nbsp;Call call = s.createCall(portQname);<br>
+
+
+&nbsp;&nbsp;call.setTargetEndpointAddress(serviceUrl);<br>
+
+
+&nbsp;&nbsp;call.setProperty(Call.SOAPACTION_USE_PROPERTY, new Boolean(true));<br>
+
+
+&nbsp;&nbsp;call.setProperty(Call.SOAPACTION_URI_PROPERTY,"");<br>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+
+
+&nbsp;&nbsp;// For WS-I compliant document-literal, need to set the encoding style<br>
+
+
+&nbsp;&nbsp;// to literal by specifying "" as the encoding style,<br>
+
+
+&nbsp;&nbsp;// and by setting the operation style to document<br>
+
+
+&nbsp;&nbsp;String ENCODING_STYLE_PROPERTY = "javax.xml.rpc.encodingstyle.namespace.uri";<br>
+
+
+&nbsp;&nbsp;String URI_ENCODING = "";<br>
+
+
+&nbsp;&nbsp;call.setProperty(ENCODING_STYLE_PROPERTY, URI_ENCODING);<br>
+
+
+&nbsp;&nbsp;call.setProperty(Call.OPERATION_STYLE_PROPERTY, "document");<br>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+
+
+&nbsp;&nbsp;// Note that the operation name need not be set by calling<br>
+
+
+&nbsp;&nbsp;// call.setOperationName(new QName(NS_BODY, "submitPO"));<br>
+
+
+&nbsp;&nbsp;// This is because the SOAP binding used by the Web service is document, not rpc.<br>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+
+
+&nbsp;&nbsp;// The types for the request parameter and return value are defined in the<br>
+
+
+&nbsp;&nbsp;// WSDL file itself, so their qnames are defined with the namespace of the body<br>
+
+
+&nbsp;&nbsp;QName requestQname = new QName(NS_BODY, "submitPO");<br>
+
+
+&nbsp;&nbsp;QName responseQname = new QName(NS_BODY, "submitPOResponse");<br>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+
+
+&nbsp;&nbsp;// Define the type of the return value for the DII call.<br>
+
+
+&nbsp;&nbsp;// SubmitPOResponse must match the wrapped type sent by the Web service.<br>
+
+
+&nbsp;&nbsp;call.setReturnType(responseQname,&nbsp;SubmitPOResponse.class);<br>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+
+
+&nbsp;&nbsp;// Define the type of the method parameter for the DII call.<br>
+
+
+&nbsp;&nbsp;// In the WSDL file, the name of the message part for submitPO is "parameters"<br>
+
+
+&nbsp;&nbsp;// Hence the request parameter is defined in this way.<br>
+
+
+&nbsp;&nbsp;call.addParameter("parameters", requestQname,&nbsp;SubmitPO.class, ParameterMode.IN);<br>
+
+
+&nbsp;&nbsp;SubmitPO param = new&nbsp;SubmitPO(xmlDocStr);<br>
+
+
+&nbsp;&nbsp;Object[] params = {param};<br>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+
+
+&nbsp;&nbsp;// Invoke the DII call<br>
+
+
+&nbsp;&nbsp;<span style="font-weight: bold;">SubmitPOResponse response = (SubmitPOResponse) call.invoke(params);</span><br>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+
+
+&nbsp; String result = response.getResult();<br>
+
+<br>
+
+<span style="font-weight: bold;">Code Example 3: Using DII to Invoke a Web Service</span><br>
+
+
+</code><br>
+
+
+Note that since the Web service uses document style for SOAP bindings, the operation name need not be set on call. 
+<h2>Jar Signing </h2>
+
+
+The Java Web Start version of the Swing application bundles JAXRPC
+runtime jars. Since some of the classes contained in these Jar files
+require unrestricted access to the system,&nbsp;the Jars need to be
+signed.&nbsp; This results in a Security warning at the client, but
+once the user grants the permissions, the client can make Web service
+calls. <br>
+
+
+<br>
+
+
+All the application classes are bundled in a single jar file,
+swing-client.jar. The other Jar files are for the JAXRPC runtime which
+are taken from the <code>lib/</code> directory of the J2EE SDK
+installation. All of these Jar files need to be signed by the same
+certificate. We sign the Jar files using the <code>s1as</code> certificate present in the keystore of the default domain (<code>domain1</code>) of the J2EE SDK. <a href="#code-example-4">Code Example 4</a> presents an ant <code>build.xml</code> fragment illustrating how the Jar files are signed: <br>
+
+
+<br>
+
+
+<code><a name="code-example-4"></a>&nbsp; &nbsp; &lt;!-- use the keystore present in the default domain of the J2EE SDK --&gt;<br>
+
+
+&nbsp;&nbsp;&nbsp; &lt;property name="keystore.location" value="${j2ee.home}/domains/domain1/config/keystore.jks"/&gt;<br>
+
+
+&nbsp; &nbsp; &lt;!-- we are using the default password used for the
+keystore. This value should be changed if the keystore password has
+been changed for the J2EE SDK&nbsp;--&gt;<br>
+
+
+&nbsp;&nbsp;&nbsp; &lt;property name="keystore.password" value="changeit"/&gt;<br>
+
+
+&nbsp;&nbsp;&nbsp; &lt;property name="key.alias" value="s1as"/&gt;<br>
+
+
+&nbsp;<br>
+
+
+&nbsp; &nbsp; &lt;!-- sign application jar --&gt;<br>
+
+
+&nbsp;&nbsp;&nbsp; <span style="font-weight: bold;">&lt;signjar
+jar="${war.build.dir}/swing-client.jar"
+signedjar="${war.build.dir}/swing-client-signed.jar"
+alias="${key.alias}" keystore="${keystore.location}"
+storepass="${keystore.password}"/&gt;</span><br>
+
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+
+
+&nbsp;&nbsp;&nbsp; &lt;property name="jaxrpc-webstart-support.dir" value="${war.build.dir}/jws-support"/&gt;<br>
+
+
+&nbsp; &nbsp; &lt;!-- sign JAXRPC runtime jars --&gt;<br>
+
+
+&nbsp;&nbsp;&nbsp; <span style="font-weight: bold;">&lt;signjar
+jar="${j2ee.home}/lib/j2ee.jar"
+signedjar="${jaxrpc-webstart-support.dir}/j2ee.jar"
+alias="${key.alias}" keystore="${keystore.location}"
+storepass="${keystore.password}"/&gt;</span><br>
+
+
+&nbsp;&nbsp;&nbsp; &lt;signjar jar="${j2ee.home}/lib/jaxrpc-api.jar"
+signedjar="${jaxrpc-webstart-support.dir}/jaxrpc-api.jar"
+alias="${key.alias}" keystore="${keystore.location}"
+storepass="${keystore.password}"/&gt;<br>
+
+
+&nbsp; &nbsp; &lt;!-- ..... sign other jar files in the same way --&gt;<br>
+
+<br>
+
+<span style="font-weight: bold;">Code Example 4: Ant Build Fragment for Signing Jar Files</span><br>
+
+</code>
+<h2>Generating the JNLP Descriptor</h2>
+
+
+The JNLP descriptor is used to invoke the Java Web Start runtime
+installed on the user system. The contents of the JNLP descriptor need
+to be dynamic. For example, the <code>jnlp</code> element needs a codebase attribute
+which is a URL where the application jar files are available. We would
+like the codebase to be discovered dynamically&nbsp; to match the URL
+where the application war module was deployed. Similarly, the Swing
+client needs to dynamically determine the URL where the String Purchase
+Order Web Service is running. This can be done by generating the JNLP
+descriptor through a JSP file bundled in the application war module.<br>
+
+
+The JSP file needs to output an XML file with the specific content type of <code>application/x-java-jnlp-file</code> so that the Java Web Start gets invoked correctly. This can be done by using a JSP page directive as illustrated in <a href="#code-example-5">Code Example 5</a>: <br>
+
+
+<br>
+
+
+<code><a name="code-example-5"></a>&lt;%@ page contentType="application/x-java-jnlp-file" info="Swing Client JNLP" %&gt;<br>
+
+<br>
+
+<span style="font-weight: bold;">Code Example 5: Using contentType Page Directive for JNLP Descriptors</span><br>
+
+
+</code><br>
+
+
+The codebase URL needs to constructed as well. The URL consists of the protocol type (<code>http</code> or <code>https</code>),
+the server name, the server port, and the context path where the
+application jar files are available. The server port need not be
+specified if it is 80 for <code>http</code> and 443 for <code>https</code>. <a href="#code-example-6">Code Example 6</a> presents a JSP code fragment that calculates the codebase: <br>
+
+
+<br>
+
+
+<code><a name="code-example-6"></a>&lt;%<br>
+
+
+&nbsp; StringBuffer serverurl = new StringBuffer();<br>
+
+
+&nbsp;&nbsp;serverurl.append(!request.isSecure() ? "http://" : "https://");<br>
+
+
+&nbsp;&nbsp;serverurl.append(request.getServerName());<br>
+
+
+&nbsp; if (request.getServerPort() != (!request.isSecure() ? 80 : 443))<br>
+
+
+&nbsp;&nbsp;{<br>
+
+
+&nbsp; &nbsp; serverurl.append(':');<br>
+
+
+&nbsp; &nbsp; serverurl.append(request.getServerPort());<br>
+
+
+&nbsp;&nbsp;}<br>
+
+
+&nbsp; serverurl.append('/');<br>
+
+
+&nbsp;&nbsp;String codebase = serverurl + request.getContextPath() + '/';<br>
+
+
+%&gt;<br>
+
+
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;<br>
+
+
+&lt;%-- JNLP File for launching Swing Client with JavaWebStart --%&gt;<br>
+
+
+&lt;jnlp&nbsp;spec="1.0+"&nbsp;<span style="font-weight: bold;">codebase="&lt;%=codebase%&gt;"</span> href="swing-client.jnlp"&gt;<br>
+
+<br>
+
+<span style="font-weight: bold;">Code Example 6: Dynamically Generating the Codebase</span><br>
+
+
+</code><br>
+
+
+The URL for the String purchase order Web service is calculated in a similar manner as illustrated in <a href="#code-example-7">Code Example 7</a>: <br>
+
+
+<br>
+
+
+<code><a name="code-example-7"></a>&lt;%<br>
+
+
+&nbsp;&nbsp;String serviceurl = serverurl + "webservice/StringPurchaseOrderService";<br>
+
+
+%&gt;<br>
+
+
+&nbsp; &lt;!-- ... other JNLP descriptor contents --&gt;<br>
+
+
+&nbsp; &lt;resources&gt;<br>
+
+
+&nbsp;&nbsp;&nbsp; &lt;!-- ... other resource delcarations --&gt;<br>
+
+
+&nbsp;&nbsp;&nbsp; <span style="font-weight: bold;">&lt;property name="stringwebservice.url" value="&lt;%=serviceurl%&gt;"/&gt;</span><br>
+
+
+&nbsp; &lt;/resources&gt;<br>
+
+<br>
+
+<span style="font-weight: bold;">Code Example 7: Passing a System Property to a Java Web Start Application</span><br>
+
+
+</code><br>
+
+
+The Swing client uses the <code>stringwebservice.url</code> property to set the Web service URL as shown in <a href="#code-example-8">Code Example 8</a>. <br>
+
+
+<br>
+
+
+<code><a name="code-example-8"></a>&nbsp; String serviceurl = System.getProperty("stringwebservice.url");<br>
+
+
+&nbsp;&nbsp;if (serviceurl != null) {<br>
+
+
+&nbsp; &nbsp; serviceUrlTextField.setText(serviceurl);<br>
+
+
+&nbsp; } <br>
+
+<br>
+
+<span style="font-weight: bold;">Code Example 8: Retrieving a System Property in a Java Web Start Application</span><br>
+
+
+</code><br>
+
+
+ The welcome page (<code>index.html</code>) of the Web
+application provides a link to launch the Swing application through
+Java Web
+Start. This link does not directly refer to the&nbsp;JSP file that
+generates the JNLP descriptor. Instead, it links to a virtual URL <code>swing-client.jnlp</code> which is mapped to the JSP file.This is done to ensure that the browser gets the <code>.jnlp</code>
+extension for the JNLP file to handle the case where a browser uses
+file extension to invoke Java Web Start. This is done by using a <code>servlet-mapping</code> element as shown in <a href="#code-example-9">Code Example 9</a>: <br>
+
+
+<br>
+
+
+<code><a name="code-example-9"></a>&nbsp; &lt;!--&nbsp;map the JNLP JSP as a servlet since only servlets can have servlet-mapings --&gt;<br>
+
+
+&nbsp; &lt;servlet&gt;<br>
+
+
+&nbsp;&nbsp;&nbsp; &lt;servlet-name&gt;jnlp-gen&lt;/servlet-name&gt;<br>
+
+
+&nbsp;&nbsp;&nbsp; &lt;jsp-file&gt;swing-client-jnlp.jsp&lt;/jsp-file&gt;<br>
+
+
+&nbsp; &lt;/servlet&gt;<br>
+
+
+</code><code>&nbsp; &lt;!-- map the virtual URL /swing-client.jnlp to the JSP file --&gt;<br>
+
+
+</code><code>&nbsp; &lt;servlet-mapping&gt;<br>
+
+
+&nbsp;&nbsp;&nbsp; <span style="font-weight: bold;">&lt;servlet-name&gt;jnlp-gen&lt;/servlet-name&gt;</span><br style="font-weight: bold;">
+
+
+<span style="font-weight: bold;">&nbsp;&nbsp;&nbsp; &lt;url-pattern&gt;/swing-client.jnlp&lt;/url-pattern&gt;</span><br>
+
+
+&nbsp; &lt;/servlet-mapping&gt; <br>
+
+<br>
+
+<span style="font-weight: bold;">Code Example 9: Mapping the JSP File Generating the JNLP Descriptor to .jnlp Extension</span> </code>
+
+<hr style="width: 100%; height: 2px;"><small>&copy; Sun Microsystems
+2005. All of the material in The Java BluePrints Solutions Catalog is
+<a href="../../COPYRIGHT.html">copyright</a>-protected and may not be
+published in other works without express written permission from Sun
+Microsystems. </small>
+</body>
+</html>

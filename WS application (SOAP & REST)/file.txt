@@ -1,0 +1,10 @@
+Gamepad 10 12
+
+Harddisk 200 4
+
+Keyboard 1000 91
+
+Laptop 1000 10
+
+Mouse 10 20
+

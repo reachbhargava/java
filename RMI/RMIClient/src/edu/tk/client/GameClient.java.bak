@@ -1,0 +1,49 @@
+package edu.tk.client;
+
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RMISecurityManager;
+import java.rmi.RemoteException;
+
+import edu.tk.remote.IGameClient;
+import edu.tk.remote.IGameServer;
+
+public class GameClient {
+	public static void main(String[] args) {
+		System.setProperty("java.security.policy", "file:./security.policy");
+		IGameServer iGameServer;
+		try {
+			System.setSecurityManager(new RMISecurityManager());
+			
+			iGameServer = (IGameServer) Naming
+					.lookup("rmi://localhost/gameServerService");
+
+			// login into IGameServer
+			// response should be the current position of fly
+			// Server should also invoke a new method that will return to all
+			// clients, new players name.
+
+			// iGameServer.login("Bhargav");
+
+			login("Bhargav", iGameServer);
+			login("Adarsh", iGameServer);
+			login("Aditi", iGameServer);
+
+			// iGameClient.receiveFlyHunted("Adarsh", 10);
+//			iGameServer.huntFly("Aditi");
+
+			System.out.println("Completed");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("HelloClient exception: " + e);
+		}
+	}
+
+	private static void login(String playerName, IGameServer iGameServer) throws RemoteException,
+			MalformedURLException, NotBoundException {
+		IGameClient client = new GameClientService();
+		iGameServer.login(playerName, client);
+	}
+}

@@ -1,0 +1,1 @@
+wsimport -d InventoryClient/bin/ http://localhost:8090/ws/inventoryService?wsdl

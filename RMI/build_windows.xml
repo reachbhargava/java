@@ -1,0 +1,49 @@
+<project name="simpleCompile" default="all" basedir=".">
+   <target name="init">
+      <property name="serverSourceDir" value="RMIServer/src"/>
+      <property name="serverOutputDir" value="RMIServer/bin"/>
+      <property name="clientSourceDir" value="RMIClient/src"/>
+      <property name="clientOutputDir" value="RMIClient/bin"/>
+   </target>
+   <target name="clean" depends="init">
+      <delete dir="${serverOutputDir}" />
+	  <delete dir="${clientOutputDir}" />
+	  <delete file="RMIServer.jar" />
+	  <delete file="RMIClient.jar" />
+	  <delete file="security.policy" />
+   </target>
+   <target name="prepare" depends="clean">
+      <mkdir dir="${serverOutputDir}" />
+	  <mkdir dir="${clientOutputDir}" />
+   </target>
+   <target name="compileServer" depends="prepare">
+     <javac srcdir="${serverSourceDir}" destdir="${serverOutputDir}" />
+   </target>
+   <target name="compileClient" depends="prepare">
+     <javac srcdir="${clientSourceDir}" destdir="${clientOutputDir}" />
+   </target>
+   
+   <target name="server" depends="compileServer" description="package, output to JAR">
+		<jar jarfile="RMIServer.jar" basedir="${serverOutputDir}" >
+		    <manifest>
+				<!-- create an executable Jar -->
+				<attribute name="Main-Class" value="edu.tk.server.Server" />
+		    </manifest>
+		</jar>
+		<copy file="RMIServer/security.policy" todir="."/>
+	</target>
+	
+	<target name="client" depends="compileClient" description="package, output to JAR">
+		<jar jarfile="RMIClient.jar" basedir="${clientOutputDir}" >
+		    <manifest>
+				<!-- create an executable Jar -->
+				<attribute name="Main-Class" value="edu.tk.client.FlyGame" />
+		    </manifest>
+		</jar>
+		<copy file="RMIClient/bee.png" todir="."/>
+	</target>
+   
+   <target name="all" depends="server,client">
+		<exec dir="." executable="start_app.bat"></exec>
+   </target>
+</project>

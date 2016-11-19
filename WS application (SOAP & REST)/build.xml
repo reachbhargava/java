@@ -1,0 +1,77 @@
+<project name="Webservices" default="all" basedir=".">
+   <target name="init">
+      <property name="serverSourceDir" value="InventoryService/src"/>
+      <property name="serverOutputDir" value="InventoryService/bin"/>
+      <property name="clientSourceDir" value="InventoryClient/src"/>
+      <property name="clientOutputDir" value="InventoryClient/bin"/>
+   </target>
+   <path id="classpath">
+		<fileset dir="InventoryService/lib">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+   <target name="clean" depends="init">
+      <delete dir="${serverOutputDir}" />
+	  <delete dir="${clientOutputDir}" />
+	  <delete file="InventoryService.jar" />
+	  <delete file="InventoryClient.jar" />
+   </target>
+   <target name="prepare" depends="clean">
+      <mkdir dir="${serverOutputDir}" />
+	  <mkdir dir="${clientOutputDir}" />
+   </target>
+   <target name="compileServer" depends="prepare">
+     <javac includeantruntime="false" srcdir="${serverSourceDir}" destdir="${serverOutputDir}" classpathref="classpath"/>
+   </target>
+   <target name="compileClient" depends="prepare,server_exec">
+     <javac includeantruntime="false" srcdir="${clientSourceDir}" destdir="${clientOutputDir}" classpathref="classpath" />
+   </target>
+   <pathconvert property="classpath.name" pathsep=" ">
+		<path refid="classpath" />
+		<mapper>
+			<chainedmapper>
+				<flattenmapper />
+				<globmapper from="*.jar" to="InventoryService/lib/*.jar" />
+			</chainedmapper>
+		</mapper>
+	</pathconvert>
+   <target name="server" depends="compileServer" description="package, output to JAR">
+		<jar jarfile="InventoryService.jar" basedir="${serverOutputDir}" >
+		    <manifest>
+				<!-- create an executable Jar -->
+				<attribute name="Main-Class" value="edu.service.ServerStartUp" />
+				<attribute name="Class-Path" value="${classpath.name}" />
+		    </manifest>
+		</jar>
+	<chmod file="InventoryService.jar" perm="ugo+rwx"/>
+	</target>
+	
+	<target name="server_exec" depends="server">
+	<chmod file="start_server.sh" perm="ugo+rwx"/>
+	<chmod file="import_wsdl.sh" perm="ugo+rwx"/>
+		<exec dir="." executable="/bin/bash">
+			<arg value="start_server.sh"/>
+		</exec>
+		<exec dir="." executable="/bin/bash">
+			<arg value="import_wsdl.sh"/>
+		</exec>
+   </target>
+	
+	<target name="client" depends="compileClient" description="package, output to JAR">
+		<jar jarfile="InventoryClient.jar" basedir="${clientOutputDir}" >
+		    <manifest>
+				<!-- create an executable Jar -->
+				<attribute name="Main-Class" value="com.tklab.Client" />
+				<attribute name="Class-Path" value="${classpath.name}" />
+		    </manifest>
+		</jar>
+	<chmod file="InventoryClient.jar" perm="ugo+rwx"/>
+	</target>
+   
+   <target name="all" depends="client">
+		<chmod file="start_client.sh" perm="ugo+rwx"/>
+		<exec dir="." executable="/bin/bash">
+			<arg value="start_client.sh"/>
+		</exec>
+   </target>
+</project>
