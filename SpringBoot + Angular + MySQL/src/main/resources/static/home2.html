@@ -1,0 +1,51 @@
+
+<div ng-controller="homeController as hc">
+	{{hc.greeting}} Please register
+	<hr />
+	<form class="form-horizontal" role="form" ng-submit="hc.registerUser(inputForm.$valid)"
+		name="inputForm" novalidate="novalidate">
+		<div class="form-group form-group-md" 
+			ng-class="{'has-error':!inputForm.username.$valid && !inputForm.$pristine,
+						'has-success':inputForm.username.$valid
+					 }">
+			<div class="col-md-10">
+				<label for="username" class="control-label">UserName:</label>
+				<input type="text" class="form-control" ng-model="hc.user.username"
+					name="username" required>
+				<p class="help-block" 
+					ng-show="inputForm.username.$error.required && (!inputForm.$pristine || inputForm.$submitted)">
+					This field is required
+				</p>
+					
+			</div>
+			<pre> valid? {{inputForm.username.$error.required}}</pre>
+		</div>
+		<div class="form-group form-group-md" ng-class="{'has-error':!inputForm.password.$valid && !inputForm.$pristine,
+						'has-success':inputForm.password.$valid
+					 }">
+			<div class="col-md-10">
+				<label for="username" class="control-label">Password:</label>
+				<input type="text" class="form-control" ng-model="hc.user.password"
+					name="password" required>
+				<p class="help-block" 
+					ng-show="inputForm.password.$error.required && (!inputForm.$pristine || inputForm.$submitted)">
+					This field is required
+				</p>
+			</div>
+		</div>
+
+		<button type="submit">Register</button>
+
+		<button type="button" ng-click="hc.showListOfUsers()">Get All
+			Data</button>
+
+	</form>
+	<pre>{{ inputForm | json }}</pre>
+	<table class="table table-hover table-striped">
+		<tr ng-repeat="user in hc.users">
+			<td>{{ user.username }}</td>
+			<td>{{ user.password }}</td>
+		</tr>
+	</table>
+
+</div>

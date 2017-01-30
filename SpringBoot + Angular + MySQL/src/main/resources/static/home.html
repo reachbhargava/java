@@ -1,0 +1,44 @@
+
+<div ng-controller="homeController as hc">
+
+	<p>{{hc.greeting}} Please register</p>
+	
+	<hr />
+	<form class="form-horizontal" role="form" ng-submit="hc.registerUser()"
+		novalidate="novalidate">
+		<div class="form-group form-group-md">
+			<div class="col-md-10">
+				<label for="username" class="control-label">UserName:</label>
+				<input type="text" class="form-control" ng-model="hc.user.username"
+					ng-minlength="5"
+					ng-maxlength="10"
+					ng-minlength-err-type="userNameMinLength"
+					ng-maxlength-err-type="userNameMaxLength"
+					name="username" required>
+			</div>
+		</div>
+		
+		<div class="form-group form-group-md">
+			<div class="col-md-10">
+				<label for="username" class="control-label">Password:</label>
+				<input type="text" class="form-control" ng-model="hc.user.password"
+					ng-pattern="/(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/"
+					ng-pattern-err-type="badPassword"
+					name="password" required>
+			</div>
+		</div>
+
+		<button type="submit">Register</button>
+
+		<button type="button" ng-click="hc.showListOfUsers()">Get All
+			Data</button>
+
+	</form>
+	<table class="table table-hover table-striped">
+		<tr ng-repeat="user in hc.users">
+			<td>{{ user.username }}</td>
+			<td>{{ user.password }}</td>
+		</tr>
+	</table>
+
+</div>
